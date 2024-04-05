@@ -8,11 +8,11 @@ public class Article {
 
     public Article(int id, String text) {
         this.id = id;
-        this.text = text;
+        this.text = text.intern();
     }
 
     public Article(String text) {
-        this.text = text;
+        this.text = text.intern();
     }
 
     public int getId() {
@@ -28,6 +28,6 @@ public class Article {
     }
 
     public void setText(String text) {
-        this.text = text;
+        this.text = text.intern();
     }
 }

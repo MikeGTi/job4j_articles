@@ -31,13 +31,19 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
     private void initConnection() {
         LOGGER.info("Создание подключения к БД статей");
         try {
+            Class.forName(properties.getProperty("driver"));
+        } catch (ClassNotFoundException e) {
+            LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
+            throw new IllegalStateException();
+        }
+        try {
             connection = DriverManager.getConnection(
                     properties.getProperty("url"),
                     properties.getProperty("username"),
                     properties.getProperty("password")
             );
-        } catch (SQLException throwables) {
-            LOGGER.error("Не удалось выполнить операцию: { }", throwables.getCause());
+        } catch (SQLException throwable) {
+            LOGGER.error("Не удалось выполнить операцию: { }", throwable.getCause());
             throw new IllegalStateException();
         }
     }
@@ -80,8 +86,8 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
             var selection = statement.executeQuery();
             while (selection.next()) {
                 articles.add(new Article(
-                        selection.getInt("id"),
-                        selection.getString("text")
+                                    selection.getInt("id"),
+                                    selection.getString("text")
                 ));
             }
         } catch (Exception e) {
@@ -94,6 +100,12 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
     @Override
     public void close() throws Exception {
         if (connection != null) {
+            try (var statement = connection.prepareStatement("shutdown;")) {
+                statement.executeQuery();
+            } catch (Exception e) {
+                LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
+                throw new IllegalStateException();
+            }
             connection.close();
         }
     }
