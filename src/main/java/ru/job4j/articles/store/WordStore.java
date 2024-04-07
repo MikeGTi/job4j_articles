@@ -92,12 +92,10 @@ public class WordStore implements Store<Word>, AutoCloseable {
             for (int i = 0; i < models.size(); i++) {
                 preparedStatement.setString(1, models.get(i).getValue());
                 preparedStatement.addBatch();
-                if(i % 1000 == 0) {
-                    preparedStatement.executeBatch();
-                }
             }
             preparedStatement.executeBatch();
             connection.commit();
+            connection.setAutoCommit(true);
         } catch (Exception e) {
             LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
             throw new IllegalStateException();

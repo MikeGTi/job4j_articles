@@ -25,28 +25,29 @@ public class SimpleArticleService implements ArticleService {
         LOGGER.info("Генерация статей в количестве {}", count);
         var words = wordStore.findAll();
 
-        int GENERATE_BY_PART = 50_000;
+        int generateByPart = 50_000;
         int upperEnd;
         int innerEnd;
         List<Article> articles;
 
         if (count == 1) {
-            upperEnd = innerEnd = 1;
+            upperEnd = 1;
+            innerEnd = 1;
             articles = new ArrayList<>(1);
-        } else if (count < GENERATE_BY_PART) {
+        } else if (count < generateByPart) {
             upperEnd = 1;
             innerEnd = count;
             articles = new ArrayList<>(count);
         } else {
-            upperEnd = count / GENERATE_BY_PART;
-            innerEnd = GENERATE_BY_PART;
-            articles = new ArrayList<>(GENERATE_BY_PART);
+            upperEnd = count / generateByPart;
+            innerEnd = generateByPart;
+            articles = new ArrayList<>(generateByPart);
         }
 
         int articlesCount = 0;
         for (int i = 0; i < upperEnd; i++) {
-            if (i == upperEnd - 1 && count % GENERATE_BY_PART > 0) {
-                innerEnd += count % GENERATE_BY_PART;
+            if (i == upperEnd - 1 && count % generateByPart > 0) {
+                innerEnd += count % generateByPart;
                 articles = new ArrayList<>(innerEnd);
             }
             for (int j = 0; j < innerEnd; j++) {
