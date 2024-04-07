@@ -7,8 +7,8 @@ import ru.job4j.articles.model.Word;
 import ru.job4j.articles.service.generator.ArticleGenerator;
 import ru.job4j.articles.store.Store;
 
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SimpleArticleService implements ArticleService {
 
@@ -24,12 +24,43 @@ public class SimpleArticleService implements ArticleService {
     public void generate(Store<Word> wordStore, int count, Store<Article> articleStore) {
         LOGGER.info("Генерация статей в количестве {}", count);
         var words = wordStore.findAll();
-        var articles = IntStream.iterate(0, i -> i < count, i -> i + 1)
-                .peek(i -> LOGGER.info("Сгенерирована статья № {}", i))
-                .mapToObj((x) -> articleGenerator.generate(words))
-                .collect(Collectors.toList());
-        articles.forEach(articleStore::save);
+
+        int GENERATE_BY_PART = 50_000;
+        int upperEnd;
+        int innerEnd;
+        List<Article> articles;
+
+        if (count == 1) {
+            upperEnd = innerEnd = 1;
+            articles = new ArrayList<>(1);
+        } else if (count < GENERATE_BY_PART) {
+            upperEnd = 1;
+            innerEnd = count;
+            articles = new ArrayList<>(count);
+        } else {
+            upperEnd = count / GENERATE_BY_PART;
+            innerEnd = GENERATE_BY_PART;
+            articles = new ArrayList<>(GENERATE_BY_PART);
+        }
+
+        int articlesCount = 0;
+        for (int i = 0; i < upperEnd; i++) {
+            if (i == upperEnd - 1 && count % GENERATE_BY_PART > 0) {
+                innerEnd += count % GENERATE_BY_PART;
+                articles = new ArrayList<>(innerEnd);
+            }
+            for (int j = 0; j < innerEnd; j++) {
+                articlesCount++;
+                LOGGER.info("Сгенерирована статья № {}", articlesCount);
+                articles.add(articleGenerator.generate(words));
+            }
+            if (articles.size() > 1) {
+                articleStore.saveAll(articles);
+            } else {
+                articleStore.save(articles.get(0));
+            }
+            articles.clear();
+        }
         words.clear();
-        articles.clear();
     }
 }

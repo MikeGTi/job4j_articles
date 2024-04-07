@@ -3,4 +3,4 @@ create cached table if not exists articles (
     text text
 );
 
-set files write delay 10;
+set files write delay 180;

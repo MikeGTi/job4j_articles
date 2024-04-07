@@ -84,6 +84,28 @@ public class WordStore implements Store<Word>, AutoCloseable {
     }
 
     @Override
+    public boolean saveAll(List<Word> models) {
+        LOGGER.info("Сохранение списка статей");
+        var sql = "insert into dictionary(word) values(?)";
+        try (var preparedStatement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
+            for (int i = 0; i < models.size(); i++) {
+                preparedStatement.setString(1, models.get(i).getValue());
+                preparedStatement.addBatch();
+                if(i % 1000 == 0) {
+                    preparedStatement.executeBatch();
+                }
+            }
+            preparedStatement.executeBatch();
+            connection.commit();
+        } catch (Exception e) {
+            LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
+            throw new IllegalStateException();
+        }
+        return true;
+    }
+
+    @Override
     public List<Word> findAll() {
         LOGGER.info("Загрузка всех слов");
         var sql = "select * from dictionary";
@@ -109,5 +131,4 @@ public class WordStore implements Store<Word>, AutoCloseable {
             connection.close();
         }
     }
-
 }

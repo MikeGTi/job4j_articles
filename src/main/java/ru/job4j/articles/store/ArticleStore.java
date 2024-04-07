@@ -78,6 +78,26 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
     }
 
     @Override
+    public boolean saveAll(List<Article> models) {
+        LOGGER.info("Сохранение списка статей");
+        var sql = "insert into articles(text) values(?)";
+        try (var preparedStatement = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
+            for (int i = 0; i < models.size(); i++) {
+                preparedStatement.setString(1, models.get(i).getText());
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+            connection.commit();
+            connection.setAutoCommit(true);
+        } catch (Exception e) {
+            LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
+            throw new IllegalStateException();
+        }
+        return true;
+    }
+
+    @Override
     public List<Article> findAll() {
         LOGGER.info("Загрузка всех статей");
         var sql = "select * from articles";
@@ -100,12 +120,6 @@ public class ArticleStore implements Store<Article>, AutoCloseable {
     @Override
     public void close() throws Exception {
         if (connection != null) {
-            try (var statement = connection.prepareStatement("shutdown;")) {
-                statement.executeQuery();
-            } catch (Exception e) {
-                LOGGER.error("Не удалось выполнить операцию: { }", e.getCause());
-                throw new IllegalStateException();
-            }
             connection.close();
         }
     }
