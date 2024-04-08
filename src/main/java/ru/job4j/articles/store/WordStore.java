@@ -83,7 +83,7 @@ public class WordStore implements Store<Word>, AutoCloseable {
         return model;
     }
 
-    @Override
+    /*@Override
     public boolean saveAll(List<Word> models) {
         LOGGER.info("Сохранение списка статей");
         var sql = "insert into dictionary(word) values(?)";
@@ -101,7 +101,7 @@ public class WordStore implements Store<Word>, AutoCloseable {
             throw new IllegalStateException();
         }
         return true;
-    }
+    }*/
 
     @Override
     public List<Word> findAll() {

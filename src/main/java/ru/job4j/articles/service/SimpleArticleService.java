@@ -20,7 +20,62 @@ public class SimpleArticleService implements ArticleService {
         this.articleGenerator = articleGenerator;
     }
 
+    /*@Override
+    public void generate(Store<Word> wordStore, int count, Store<Article> articleStore) {
+        LOGGER.info("Генерация статей в количестве {}", count);
+        var words = wordStore.findAll();
+        for (int i = 0; i < count; i++) {
+            LOGGER.info("Сгенерирована статья № {}", i);
+            articleStore.save(articleGenerator.generate(words));
+        }
+        words.clear();
+    }*/
+
     @Override
+    public void generate(Store<Word> wordStore, int count, Store<Article> articleStore) {
+        LOGGER.info("Генерация статей в количестве {}", count);
+        var words = wordStore.findAll();
+
+        int generateByPart = 50_000;
+        int upperEnd;
+        int innerEnd;
+        List<Article> articles;
+
+        if (count == 1) {
+            upperEnd = 1;
+            innerEnd = 1;
+            articles = new ArrayList<>(1);
+        } else if (count < generateByPart) {
+            upperEnd = 1;
+            innerEnd = count;
+            articles = new ArrayList<>(count);
+        } else {
+            upperEnd = count / generateByPart;
+            innerEnd = generateByPart;
+            articles = new ArrayList<>(generateByPart);
+        }
+
+        int articlesCount = 0;
+        for (int i = 0; i < upperEnd; i++) {
+            if (i == upperEnd - 1 && count % generateByPart > 0) {
+                innerEnd += count % generateByPart;
+                articles = new ArrayList<>(innerEnd);
+            }
+            for (int j = 0; j < innerEnd; j++) {
+                articlesCount++;
+                LOGGER.info("Сгенерирована статья № {}", articlesCount);
+                articles.add(articleGenerator.generate(words));
+            }
+            articles.forEach(articleStore::save);
+            articles.clear();
+        }
+        words.clear();
+    }
+
+    /*
+     *   upgraded interface ArticleService (restricted)
+     */
+    /*@Override
     public void generate(Store<Word> wordStore, int count, Store<Article> articleStore) {
         LOGGER.info("Генерация статей в количестве {}", count);
         var words = wordStore.findAll();
@@ -63,5 +118,5 @@ public class SimpleArticleService implements ArticleService {
             articles.clear();
         }
         words.clear();
-    }
+    }*/
 }
